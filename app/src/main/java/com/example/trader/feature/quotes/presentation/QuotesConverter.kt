@@ -48,7 +48,8 @@ class QuotesConverterImpl : QuotesConverter {
             val textColor = when {
                 background != null -> R.color.white
                 chg != null && chg.toDouble() < 0 -> R.color.red
-                else -> R.color.green
+                chg != null && chg.toDouble() > 0 -> R.color.green
+                else -> R.color.black
             }
 
             val cachedModel = QuoteModel(
