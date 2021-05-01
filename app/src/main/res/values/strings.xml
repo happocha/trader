@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">trader</string>
+    <string name="error_connection_lost">Нет подключения</string>
+</resources>
