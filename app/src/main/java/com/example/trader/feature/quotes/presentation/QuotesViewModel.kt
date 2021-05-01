@@ -14,6 +14,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 
@@ -52,6 +53,7 @@ class QuotesViewModelImpl(
                     }
                     showProgress.postValue(false)
                 }
+                .filter { it?.c != null }
                 .collect { response ->
                     response?.let { model ->
                         model.c?.let {

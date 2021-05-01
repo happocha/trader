@@ -51,11 +51,16 @@ class QuotesConverterImpl : QuotesConverter {
                 else -> R.color.green
             }
 
-            cachedMap[item.key]?.chg = chg
-            cachedMap[item.key]?.ltr = ltr
-            cachedMap[item.key]?.name = name
-            cachedMap[item.key]?.ltp = ltp
-            cachedMap[item.key]?.pcp = pcp
+            val cachedModel = QuoteModel(
+                c = currentItem.c,
+                pcp = pcp,
+                ltr = ltr,
+                name = name,
+                ltp = ltp,
+                chg = chg
+            )
+
+            cachedMap[item.key] = cachedModel
 
             items.add(
                 QuoteViewData(
