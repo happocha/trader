@@ -1,3 +1,3 @@
 Screenshots
 -----------
-![screenshot](screenshot.jpeg)
+![screenshot](screenshot.jpg)
