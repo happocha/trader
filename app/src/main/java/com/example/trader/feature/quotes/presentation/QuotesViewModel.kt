@@ -11,10 +11,7 @@ import com.example.trader.feature.quotes.presentation.model.QuoteViewData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 interface QuotesViewModel {
@@ -27,6 +24,10 @@ class QuotesViewModelImpl(
     private val quotesUseCase: QuotesUseCase,
     private val quotesConverter: QuotesConverter
 ) : QuotesViewModel, ViewModel() {
+
+    companion object {
+        private const val DEFAULT_DELAY = 2000L
+    }
 
     private var job: Job? = null
 
@@ -44,6 +45,14 @@ class QuotesViewModelImpl(
     private fun getQuotes() {
         viewModelScope.launch(Dispatchers.IO) {
             quotesUseCase.getQuotes()
+                .retryWhen { _, attempt ->
+                    if (attempt < Int.MAX_VALUE) {
+                        delay(DEFAULT_DELAY)
+                        return@retryWhen true
+                    } else {
+                        return@retryWhen false
+                    }
+                }
                 .onStart { showProgress.postValue(true) }
                 .catch {
                     if (it.localizedMessage.isNullOrEmpty().not()) {
@@ -60,7 +69,7 @@ class QuotesViewModelImpl(
                     }
                     job?.cancel()
                     job = launch(Dispatchers.IO) {
-                        delay(2000)
+                        delay(DEFAULT_DELAY)
                         listItems.postValue(
                             quotesConverter.convert(
                                 currentMap,
