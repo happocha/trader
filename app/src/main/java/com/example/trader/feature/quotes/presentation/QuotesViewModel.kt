@@ -4,7 +4,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.trader.common.NetworkChecker
 import com.example.trader.common.SingleLiveEvent
 import com.example.trader.feature.quotes.domain.QuotesUseCase
 import com.example.trader.feature.quotes.domain.model.QuoteModel
@@ -22,15 +21,11 @@ interface QuotesViewModel {
     val listItems: LiveData<List<QuoteViewData>>
     val showMessage: LiveData<String>
     val showProgress: LiveData<Boolean>
-    val showErrorConnectionMessage: LiveData<Boolean>
-
-    fun onNetworkStateChanged()
 }
 
 class QuotesViewModelImpl(
     private val quotesUseCase: QuotesUseCase,
-    private val quotesConverter: QuotesConverter,
-    private val networkChecker: NetworkChecker
+    private val quotesConverter: QuotesConverter
 ) : QuotesViewModel, ViewModel() {
 
     private var job: Job? = null
@@ -41,11 +36,14 @@ class QuotesViewModelImpl(
     override val listItems = MutableLiveData<List<QuoteViewData>>()
     override val showProgress = MutableLiveData<Boolean>()
     override val showMessage = SingleLiveEvent<String>()
-    override val showErrorConnectionMessage = SingleLiveEvent<Boolean>()
 
-    private fun openSocket() {
+    init {
+        getQuotes()
+    }
+
+    private fun getQuotes() {
         viewModelScope.launch(Dispatchers.IO) {
-            quotesUseCase.startSocket()
+            quotesUseCase.getQuotes()
                 .onStart { showProgress.postValue(true) }
                 .catch {
                     if (it.localizedMessage.isNullOrEmpty().not()) {
@@ -73,15 +71,5 @@ class QuotesViewModelImpl(
                     job = null
                 }
         }
-    }
-
-    override fun onCleared() {
-        quotesUseCase.stopSocket()
-        super.onCleared()
-    }
-
-    override fun onNetworkStateChanged() {
-        showErrorConnectionMessage.value = networkChecker.isNetworkAvailable().not()
-        openSocket()
     }
 }

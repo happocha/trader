@@ -5,25 +5,31 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 interface QuotesRepository {
-    suspend fun startSocket(): Flow<QuoteModel?>
+    fun startSocket()
     fun stopSocket()
+
+    suspend fun getQuotes(): Flow<QuoteModel?>
 }
 
 class QuotesRepositoryImpl(
-    private val webServicesProvider: WebServicesProvider,
-    private val mapper: QuotesMapper
+    private val quotesWebServicesProvider: QuotesWebServicesProvider,
+    private val mapper: QuotesMapper,
+    private val quotesController: QuotesController
 ) : QuotesRepository {
 
-    override suspend fun startSocket(): Flow<QuoteModel?> =
-        webServicesProvider.startSocket()
-            .map { response ->
-                response.exception?.let {
-                    throw it
-                }
-                mapper.mapValue(response.text)
-            }
+    override fun startSocket() {
+        quotesWebServicesProvider.startSocket()
+    }
 
     override fun stopSocket() {
-        webServicesProvider.stopSocket()
+        quotesWebServicesProvider.stopSocket()
     }
+
+    override suspend fun getQuotes(): Flow<QuoteModel?> =
+        quotesController.state.map { response ->
+            when (response) {
+                is QuotesResponse.Data -> mapper.mapValue(response.text)
+                is QuotesResponse.Error -> throw response.throwable
+            }
+        }
 }

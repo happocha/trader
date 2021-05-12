@@ -12,13 +12,13 @@ class QuotesDivideDecoration(
 ) : RecyclerView.ItemDecoration() {
 
     private var drawable: Drawable? = ContextCompat.getDrawable(context, R.drawable.bg_divider)
-    private val spaceMedium = context.resources.getDimensionPixelSize(R.dimen.spacing_medium)
+    private val spaceLarge = context.resources.getDimensionPixelSize(R.dimen.spacing_large)
     private val spaceSmall = context.resources.getDimensionPixelSize(R.dimen.spacing_small)
 
     override fun onDrawOver(c: Canvas, parent: RecyclerView, state: RecyclerView.State) {
 
-        val left = parent.paddingLeft + spaceMedium
-        val right = parent.width - spaceMedium
+        val left = parent.paddingLeft + spaceLarge
+        val right = parent.width
 
         val childCount = parent.childCount
         for (i in 0 until childCount - 1) {

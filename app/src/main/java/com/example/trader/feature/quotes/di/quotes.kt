@@ -5,19 +5,26 @@ import com.example.trader.App
 import com.example.trader.common.ViewModelFactory
 import com.example.trader.common.extension.app
 import com.example.trader.feature.quotes.data.*
+import com.example.trader.feature.quotes.domain.QuotesSocketUseCase
+import com.example.trader.feature.quotes.domain.QuotesSocketUseCaseImpl
 import com.example.trader.feature.quotes.domain.QuotesUseCase
 import com.example.trader.feature.quotes.domain.QuotesUseCaseImpl
 import com.example.trader.feature.quotes.presentation.*
-import com.google.gson.Gson
 
-fun App.provideWebService(): WebServicesProvider =
-    WebServicesProviderImpl()
+fun App.provideQuotesController(): QuotesController =
+    QuotesControllerImpl()
+
+fun App.provideWebService(): QuotesWebServicesProvider =
+    QuotesWebServicesProviderImpl(quotesController)
 
 fun App.provideQuotesMapper(): QuotesMapper =
     QuotesMapperImpl(gson)
 
 fun App.provideQuotesRepository(): QuotesRepository =
-    QuotesRepositoryImpl(quotesWebService, quotesMapper)
+    QuotesRepositoryImpl(quotesWebService, quotesMapper, quotesController)
+
+fun App.provideQuotesSocketUseCase(): QuotesSocketUseCase =
+    QuotesSocketUseCaseImpl(quotesRepository)
 
 fun App.provideQuotesUseCase(): QuotesUseCase =
     QuotesUseCaseImpl(quotesRepository)
@@ -25,13 +32,12 @@ fun App.provideQuotesUseCase(): QuotesUseCase =
 fun App.provideQuotesConverter(): QuotesConverter =
     QuotesConverterImpl()
 
-fun QuotesActivity.provideQuotesViewModel(): QuotesViewModel =
+fun QuotesFragment.provideQuotesViewModel(): QuotesViewModel =
     ViewModelProvider(
         this,
         ViewModelFactory {
             QuotesViewModelImpl(
-                app.quotesUseCase,
-                app.quotesConverter,
-                app.networkChecker
+                quotesUseCase = app.quotesUseCase,
+                quotesConverter = app.quotesConverter
             )
         })[QuotesViewModelImpl::class.java]

@@ -1,21 +1,19 @@
 package com.example.trader.feature.quotes.data
 
 import android.util.Log
-import com.example.trader.feature.quotes.data.model.SocketResponse
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableSharedFlow
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.WebSocket
 import java.util.concurrent.TimeUnit
 
-interface WebServicesProvider {
-    fun startSocket(): MutableSharedFlow<SocketResponse>
+interface QuotesWebServicesProvider {
+    fun startSocket()
     fun stopSocket()
 }
 
-class WebServicesProviderImpl : WebServicesProvider {
+class QuotesWebServicesProviderImpl(
+    private val quotesController: QuotesController
+) : QuotesWebServicesProvider {
 
     companion object {
         private const val BASE_URL = "wss://wss.tradernet.ru"
@@ -31,19 +29,18 @@ class WebServicesProviderImpl : WebServicesProvider {
         .retryOnConnectionFailure(true)
         .build()
 
-    private var _webSocketListener: WebSocketListener? = null
+    private var _webSocketListener: QuotesWebSocketListener? = null
 
-    override fun startSocket(): MutableSharedFlow<SocketResponse> =
-        with(WebSocketListener()) {
+    override fun startSocket() =
+        with(QuotesWebSocketListener(quotesController)) {
             startSocket(this)
-            this@with.state
         }
 
-    fun startSocket(webSocketListener: WebSocketListener) {
-        _webSocketListener = webSocketListener
+    private fun startSocket(quotesWebSocketListener: QuotesWebSocketListener) {
+        _webSocketListener = quotesWebSocketListener
         _webSocket = socketOkHttpClient.newWebSocket(
             Request.Builder().url(BASE_URL).build(),
-            webSocketListener
+            quotesWebSocketListener
         )
     }
 
@@ -51,8 +48,8 @@ class WebServicesProviderImpl : WebServicesProvider {
         try {
             _webSocket?.close(NORMAL_CLOSURE_STATUS, null)
             _webSocket = null
-            _webSocketListener?.state?.resetReplayCache()
             _webSocketListener = null
+            quotesController.reset()
             socketOkHttpClient.dispatcher.executorService.shutdown()
         } catch (ex: Exception) {
             Log.e("WebServicesProviderImpl", ex.message, ex)
